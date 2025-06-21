@@ -1,0 +1,28 @@
+<odoo>
+<?xml version="1.0" encoding="UTF-8"?>
+    <odoo>
+        <record id="action_sign_request" model="ir.actions.act_window">
+            <field name="name">Signature Requests</field>
+            <field name="res_model">sign.request</field>
+            <field name="view_mode">tree,form,kanban</field>
+        </record>
+    </odoo>
+    
+    <record id="action_sign_template" model="ir.actions.act_window">
+        <field name="name">Signature Templates</field>
+        <field name="res_model">sign.template</field>
+        <field name="view_mode">tree,form,kanban</field>
+    </record>
+    
+    <record id="action_sign_role" model="ir.actions.act_window">
+        <field name="name">Signature Roles</field>
+        <field name="res_model">sign.role</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    
+    <record id="action_sign_field" model="ir.actions.act_window">
+        <field name="name">Field Types</field>
+        <field name="res_model">sign.field</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

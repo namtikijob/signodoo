@@ -1,0 +1,12 @@
+<odoo>
+    <record id="view_sign_template_tree" model="ir.ui.view">
+        <field name="name">sign.template.list</field>
+        <field name="model">sign.template</field>
+        <field name="type">list</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+</odoo>

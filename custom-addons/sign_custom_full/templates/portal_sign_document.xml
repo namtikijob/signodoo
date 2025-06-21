@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_sign_document" name="Sign Document">
+        <t t-call="portal.portal_layout">
+            <div class="container mt-3">
+                <h2>Sign Document: <t t-esc="request.name"/></h2>
+                
+                <div id="sign-container">
+                    <!-- PDF viewer and signature fields will go here -->
+                </div>
+                
+                <button class="btn btn-primary" id="sign-submit">Sign Document</button>
+            </div>
+            
+            <script>
+                // JavaScript for handling signature
+            </script>
+        </t>
+    </template>
+</odoo>

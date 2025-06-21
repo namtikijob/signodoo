@@ -1,0 +1,13 @@
+<odoo>
+    <record id="view_sign_request_tree" model="ir.ui.view">
+        <field name="name">sign.request.list</field>
+        <field name="model">sign.request</field>
+        <field name="type">list</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>
