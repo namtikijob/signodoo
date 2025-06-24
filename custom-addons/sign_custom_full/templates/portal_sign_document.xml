@@ -1,19 +1,68 @@
-<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="portal_sign_document" name="Sign Document">
         <t t-call="portal.portal_layout">
             <div class="container mt-3">
                 <h2>Sign Document: <t t-esc="request.name"/></h2>
-                
-                <div id="sign-container">
-                    <!-- PDF viewer and signature fields will go here -->
+
+                <div class="mb-3">
+                    <canvas id="signature-pad" width="500" height="200" style="border:1px solid #ccc;"></canvas>
                 </div>
-                
-                <button class="btn btn-primary" id="sign-submit">Sign Document</button>
+
+                <button class="btn btn-danger" id="clear-signature">Clear</button>
+                <button class="btn btn-primary" id="submit-signature">Sign</button>
             </div>
-            
+
             <script>
-                // JavaScript for handling signature
+                document.addEventListener("DOMContentLoaded", function () {
+                    const canvas = document.getElementById("signature-pad");
+                    const ctx = canvas.getContext("2d");
+                    let drawing = false;
+
+                    canvas.addEventListener("mousedown", () => drawing = true);
+                    canvas.addEventListener("mouseup", () => drawing = false);
+                    canvas.addEventListener("mouseleave", () => drawing = false);
+                    canvas.addEventListener("mousemove", draw);
+
+                    function draw(e) {
+                        if (!drawing) return;
+                        ctx.lineWidth = 2;
+                        ctx.lineCap = "round";
+                        ctx.strokeStyle = "#000";
+                        ctx.lineTo(e.offsetX, e.offsetY);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(e.offsetX, e.offsetY);
+                    }
+
+                    document.getElementById("clear-signature").onclick = function () {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.beginPath();
+                    };
+
+                    document.getElementById("submit-signature").onclick = function () {
+                        const signatureData = canvas.toDataURL("image/png");
+                        const signerId = <t t-esc="signer.id"/>;
+                        const token = "<t t-esc="signer.access_token"/>";
+                        fetch("/sign/submit", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                signer_id: signerId,
+                                token: token,
+                                signature_data: signatureData
+                            })
+                        }).then(r => r.json()).then(data => {
+                            if (data.success) {
+                                alert("Thank you for signing!");
+                                window.location.href = "/";
+                            } else {
+                                alert("Error: " + data.error);
+                            }
+                        });
+                    };
+                });
             </script>
         </t>
     </template>

@@ -19,9 +19,17 @@ class SignController(http.Controller):
         signer = request.env['sign.request.signer'].sudo().browse(signer_id)
         if not signer.exists() or signer.access_token != token:
             return {'error': 'Invalid request'}
-        
+
         signer.write({
             'signature': signature_data,
             'signed_on': fields.Datetime.now(),
         })
+
+        # Kiểm tra tất cả signer đã ký chưa
+        request_obj = signer.request_id
+        all_signed = all(s.signed_on for s in request_obj.signer_ids)
+
+        if all_signed:
+            request_obj.state = 'signed'
+
         return {'success': True}

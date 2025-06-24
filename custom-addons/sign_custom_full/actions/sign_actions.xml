@@ -7,6 +7,12 @@
             <field name="view_mode">tree,form,kanban</field>
         </record>
     </odoo>
+
+    <record id="action_sign_template" model="ir.actions.act_window">
+        <field name="name">Signature Templates</field>
+        <field name="res_model">sign.template</field>
+        <field name="view_mode">tree,form</field>
+    </record>
     
     <record id="action_sign_template" model="ir.actions.act_window">
         <field name="name">Signature Templates</field>

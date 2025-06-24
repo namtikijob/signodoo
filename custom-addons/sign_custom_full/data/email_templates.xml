@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="sign_request_signer_email" model="mail.template">
+            <field name="name">Sign Document Request</field>
+            <field name="model_id" ref="model_sign_request_signer"/>
+            <field name="subject">Please sign: ${object.request_id.name}</field>
+            <field name="email_from">${user.email or ''}</field>
+            <field name="email_to">${object.partner_id.email or ''}</field>
+            <field name="body_html"><![CDATA[
+                <p>Hello ${object.partner_id.name},</p>
+                
+                <p>You have been requested to sign the document: <strong>${object.request_id.name}</strong>.</p>
+                
+                <p>Please click the link below to sign:</p>
+                
+                <p>
+                    <a href="/sign/document/${object.id}/${object.access_token}" 
+                       style="background-color: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+                        Sign Document
+                    </a>
+                </p>
+            ]]></field>
+        </record>
+    </data>
+</odoo>

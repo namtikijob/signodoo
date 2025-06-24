@@ -1,0 +1,14 @@
+<odoo>
+  <record id="view_sign_request_signer_tree" model="ir.ui.view">
+    <field name="name">sign.request.signer.tree</field>
+    <field name="model">sign.request.signer</field>
+    <field name="type">list</field>  <!-- Thêm dòng này -->
+    <field name="arch" type="xml">
+      <list>  <!-- Thay đổi từ <tree> thành <list> -->
+        <field name="partner_id"/>
+        <field name="role_id"/>
+        <field name="signed_on"/>
+      </list>  <!-- Thay đổi từ </tree> thành </list> -->
+    </field>
+  </record>
+</odoo>

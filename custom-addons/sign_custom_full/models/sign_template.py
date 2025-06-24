@@ -5,3 +5,4 @@ class SignTemplate(models.Model):
     _description = 'Signature Template'
     
     name = fields.Char(required=True)
+    active = fields.Boolean(default=True)
