@@ -2,12 +2,17 @@ from odoo import models, fields
 
 class SignField(models.Model):
     _name = 'sign.field'
-    _description = 'Signature Field Type'
-    
-    name = fields.Char(required=True)
+    _description = 'Signature Field'
+
+    name = fields.Char(string="Field Name")
+    template_id = fields.Many2one('sign.template', required=True, ondelete='cascade', string="Template")
+    role_id = fields.Many2one('sign.role', string="Role")
     type = fields.Selection([
-        ('text', 'Text'),
         ('signature', 'Signature'),
+        ('text', 'Text'),
         ('date', 'Date'),
-        ('checkbox', 'Checkbox'),
-    ], required=True, default='text')
+    ], required=True, default='signature')
+    page = fields.Integer(string="Page", default=1)
+    posX = fields.Float(string="Position X")
+    posY = fields.Float(string="Position Y")
+    required = fields.Boolean(string="Required", default=True)

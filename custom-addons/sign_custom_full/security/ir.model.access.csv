@@ -1,5 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_sign_request,sign.request,model_sign_request,base.group_user,1,1,1,0
-access_sign_template,sign.template,model_sign_template,base.group_user,1,0,0,0
+access_sign_template,sign.template,model_sign_template,base.group_user,1,1,1,1
 access_sign_request_signer,sign.request.signer,model_sign_request_signer,base.group_user,1,1,1,1
 access_sign_role,sign.role,model_sign_role,base.group_user,1,1,1,1
+access_sign_field,sign.field,model_sign_field,base.group_user,1,1,1,1
+access_ir_model_user,ir.model user,base.model_ir_model,base.group_user,1,0,0,0

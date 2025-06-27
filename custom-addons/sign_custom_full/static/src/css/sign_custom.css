@@ -1,0 +1,6 @@
+.pdf-page-wrapper {
+  padding-bottom: 20px;
+}
+.pdf-page {
+  transition: all 0.2s ease;
+}

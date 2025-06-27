@@ -1,0 +1,39 @@
+<odoo>
+  <template id="configure_template_page" name="Configure Template Page">
+    <t t-call="web.layout">
+      <t t-set="title">Configure Template</t>
+
+      <!-- Load JS PDF và logic -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+      <script t-att-src="'/sign_custom_full/static/src/js/pdf_renderer.js'"></script>
+      <link rel="stylesheet" href="/sign_custom_full/static/src/css/pdf_style.css"/>
+
+      <div class="container mt-4">
+        <h2>Configure Template: <t t-esc="template.name"/></h2>
+
+        <!-- Toolbar chọn loại trường và role -->
+        <div id="toolbar" style="margin-bottom: 15px;">
+          <select id="field-type">
+            <option value="signature">Signature</option>
+            <option value="text">Text</option>
+            <option value="date">Date</option>
+          </select>
+
+          <select id="role-selector">
+            <t t-foreach="template.get_available_roles()" t-as="role">
+              <option t-att-value="role.id"><t t-esc="role.name"/></option>
+            </t>
+          </select>
+
+          <button id="add-field" class="btn btn-primary">Add Field</button>
+        </div>
+
+        <!-- Khung canvas PDF và lớp field -->
+        <div id="pdf-container" style="position: relative;">
+          <canvas id="pdf-canvas"></canvas>
+          <div id="field-layer" style="position:absolute; left:0; top:0;"></div>
+        </div>
+      </div>
+    </t>
+  </template>
+</odoo>

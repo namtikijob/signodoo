@@ -1,12 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_sign_template_tree" model="ir.ui.view">
+    <!-- Sign Template List View -->
+    <record id="sign_template_list_view" model="ir.ui.view">
         <field name="name">sign.template.list</field>
         <field name="model">sign.template</field>
-        <field name="type">list</field>
         <field name="arch" type="xml">
-            <list>
+            <list string="Signature Templates">
                 <field name="name"/>
+                <field name="document_filename"/>
+                <field name="active"/>
             </list>
+        </field>
+    </record>
+
+    <!-- Sign Template Form View -->
+    <record id="sign_template_form_view" model="ir.ui.view">
+        <field name="name">sign.template.form</field>
+        <field name="model">sign.template</field>
+        <field name="arch" type="xml">
+            <form string="Signature Template">
+                <header>
+                    <button name="action_configure_template"
+                            type="object"
+                            string="Configure Template"
+                            class="oe_highlight"
+                            icon="fa-pencil"
+                            invisible="document == False"/>
+                </header>
+                <sheet>
+                    <group string="General Info">
+                        <field name="name"/>
+                        <field name="active"/>
+                        <!-- Đặt document_filename invisible vì sẽ tự động update -->
+                        <field name="document_filename" invisible="1"/>
+                        <!-- Quan trọng: thêm filename attribute -->
+                        <field name="document" filename="document_filename"/>
+                        <field name="ref_model_id"
+                            string="Apply For Model"
+                            options="{'no_create': True}"
+                            context="{'default_state': 'manual'}"/>
+                    </group>
+                    
+                    <!-- Hiển thị filename đã upload -->
+                    <group string="File Info" invisible="document == False">
+                        <field name="document_filename" string="Uploaded File" readonly="1"/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Fields">
+                            <field name="field_ids">
+                                <list string="Template Fields" editable="bottom">
+                                    <field name="name"/>
+                                    <field name="type"/>
+                                    <field name="role_id"/>
+                                    <field name="page"/>
+                                    <field name="posX"/>
+                                    <field name="posY"/>
+                                    <field name="required"/>
+                                </list>
+                            </field>
+                        </page>
+                        
+                        <!-- Tab Preview -->
+                        <page string="Preview" invisible="document == False">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="alert alert-info" role="alert">  <!-- Đã thêm role -->
+                                        <strong>Preview:</strong> This shows your uploaded PDF template.
+                                        Use the "Configure Template" button to add signature fields.
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <button name="action_preview_pdf" 
+                                                string="Open PDF Preview" 
+                                                type="object" 
+                                                class="btn btn-primary"
+                                                icon="fa-external-link"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Sign Field Form View -->
+    <record id="sign_field_form_view" model="ir.ui.view">
+        <field name="name">sign.field.form</field>
+        <field name="model">sign.field</field>
+        <field name="arch" type="xml">
+            <form string="Signature Field">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="template_id"/>
+                        <field name="type"/>
+                        <field name="role_id"/>
+                    </group>
+                    <group>
+                        <field name="page"/>
+                        <field name="posX"/>
+                        <field name="posY"/>
+                        <field name="required"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_sign_template" model="ir.actions.act_window">
+        <field name="name">Signature Templates</field>
+        <field name="res_model">sign.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first signature template!
+            </p>
         </field>
     </record>
 </odoo>
