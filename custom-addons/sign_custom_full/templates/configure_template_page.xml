@@ -8,31 +8,45 @@
       <script t-att-src="'/sign_custom_full/static/src/js/pdf_renderer.js'"></script>
       <link rel="stylesheet" href="/sign_custom_full/static/src/css/pdf_style.css"/>
 
-      <div class="container mt-4">
+      <!-- Thanh công cụ trên cùng -->
+      <div class="top-toolbar" style="position: fixed; top: 0; left: 0; right: 0; background-color: #fff; padding: 5px; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; align-items: center; z-index: 1000;">
+        <div>
+          <span>Page <span id="current-page">1</span> of <span id="total-pages">1</span></span>
+        </div>
+        <div>
+          <button style="margin: 0 5px;">-</button>
+          <span id="zoom-level">100%</span>
+          <button style="margin: 0 5px;">+</button>
+          <select>
+            <option>Tags</option>
+            <option>Template Properties</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Sidebar trái -->
+      <div class="sidebar" style="position: fixed; top: 50px; left: 0; width: 250px; background-color: #f8f9fa; height: calc(100% - 50px); overflow-y: auto; border-right: 1px solid #ccc;">
+        <h4 style="padding: 10px; border-bottom: 1px solid #ccc;">Fields</h4>
+        <ul style="list-style: none; padding: 0;">
+          <li class="draggable-field" data-type="signature">Signature</li>
+          <li class="draggable-field" data-type="initials">Initials</li>
+          <li class="draggable-field" data-type="name">Name</li>
+          <li class="draggable-field" data-type="email">Email</li>
+          <li class="draggable-field" data-type="phone">Phone</li>
+          <li class="draggable-field" data-type="company">Company</li>
+          <li class="draggable-field" data-type="text">Text</li>
+          <li class="draggable-field" data-type="multiline_text">Multiline Text</li>
+          <li class="draggable-field" data-type="checkbox">Checkbox</li>
+          <li class="draggable-field" data-type="radio_buttons">Radio Buttons</li>
+          <li class="draggable-field" data-type="selection">Selection</li>
+          <li class="draggable-field" data-type="date">Date</li>
+        </ul>
+      </div>
+
+      <div class="container mt-4" style="margin-left: 250px; padding-top: 50px;">
         <h2>Configure Template: <t t-esc="template.name"/></h2>
-
-        <!-- Toolbar chọn loại trường và role -->
-        <div id="toolbar" style="margin-bottom: 15px;">
-          <select id="field-type">
-            <option value="signature">Signature</option>
-            <option value="text">Text</option>
-            <option value="date">Date</option>
-          </select>
-
-          <select id="role-selector">
-            <t t-foreach="template.get_available_roles()" t-as="role">
-              <option t-att-value="role.id"><t t-esc="role.name"/></option>
-            </t>
-          </select>
-
-          <button id="add-field" class="btn btn-primary">Add Field</button>
-        </div>
-
-        <!-- Khung canvas PDF và lớp field -->
-        <div id="pdf-container" style="position: relative;">
-          <canvas id="pdf-canvas"></canvas>
-          <div id="field-layer" style="position:absolute; left:0; top:0;"></div>
-        </div>
+        <!-- PDF container -->
+        <div id="pdf-container" style="position: relative;"></div>
       </div>
     </t>
   </template>

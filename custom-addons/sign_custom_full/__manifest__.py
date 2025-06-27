@@ -12,11 +12,17 @@
         'views/sign_request_actions.xml',
         'views/sign_template_views.xml',
         'data/email_templates.xml',
+        'views/sign_role_views.xml',
+        'views/sign_field_views.xml',
+      
+
 
         'views/menu_views.xml',  
         'views/sign_signer_views.xml',
         # 'templates/assets.xml',
         'templates/configure_template_page.xml',
+
+        
         
 
         

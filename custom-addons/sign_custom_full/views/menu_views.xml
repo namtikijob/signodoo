@@ -38,5 +38,18 @@
             parent="menu_sign_root"
             action="action_sign_template"
             sequence="20"/>
+
+        <menuitem
+            id="menu_sign_roles"
+            name="Roles"
+            parent="menu_sign_root"
+            action="action_sign_role"
+            sequence="30"/>
+        <menuitem
+            id="menu_sign_field"
+            name="Fields"
+            parent="menu_sign_root"
+            action="action_sign_field"
+            sequence="40"/>
     </data>
 </odoo>

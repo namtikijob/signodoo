@@ -3,62 +3,51 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 let pdfDocument = null;
 let currentContainer = null;
 let fieldLayer = null;
+let activeField = null;
 
 function renderPDF() {
     if (!pdfDocument || !currentContainer) return;
-    
-    // Xóa tất cả canvas cũ
+
     currentContainer.innerHTML = '';
-    
-    // Lấy kích thước viewport (toàn màn hình)
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
-    // Để lại một chút margin
+    currentContainer.style.display = 'block';
+    currentContainer.style.minHeight = '100vh';
+    currentContainer.style.marginLeft = '250px';
+
+    const viewportWidth = window.innerWidth - 250;
+    const viewportHeight = window.innerHeight - 50;
     const availableWidth = viewportWidth - 40;
     const availableHeight = viewportHeight - 40;
-    
-    // Render từng trang
+
     for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
         pdfDocument.getPage(pageNum).then(function (page) {
-            // Lấy kích thước gốc của trang
             const originalViewport = page.getViewport({ scale: 1 });
             const pageWidth = originalViewport.width;
             const pageHeight = originalViewport.height;
-            
-            // Tính scale để fit với màn hình
+
             const scaleByWidth = availableWidth / pageWidth;
             const scaleByHeight = availableHeight / pageHeight;
             const scale = Math.min(scaleByWidth, scaleByHeight);
-            
             const viewport = page.getViewport({ scale });
-            
-            // Tạo wrapper cho mỗi trang
+
             const pageWrapper = document.createElement("div");
             pageWrapper.className = "page-wrapper";
-            pageWrapper.style.width = "100vw";
-            pageWrapper.style.height = "100vh";
-            pageWrapper.style.display = "flex";
-            pageWrapper.style.justifyContent = "center";
-            pageWrapper.style.alignItems = "center";
+            pageWrapper.style.width = viewportWidth + "px";
+            pageWrapper.style.minHeight = viewportHeight + "px";
             pageWrapper.style.position = "relative";
             pageWrapper.style.backgroundColor = "#f5f5f5";
             pageWrapper.setAttribute("data-page", pageNum);
-            
-            // Tạo container cho PDF và fields
+
             const pdfContainer = document.createElement("div");
             pdfContainer.style.position = "relative";
             pdfContainer.style.display = "inline-block";
-            
-            // Tạo canvas
+
             const canvas = document.createElement("canvas");
             canvas.width = viewport.width;
             canvas.height = viewport.height;
             canvas.style.display = "block";
             canvas.style.boxShadow = "0 4px 20px rgba(0,0,0,0.15)";
             canvas.style.backgroundColor = "white";
-            
-            // Tạo layer cho fields (overlay trên PDF)
+
             const pageFieldLayer = document.createElement("div");
             pageFieldLayer.className = "field-layer";
             pageFieldLayer.style.position = "absolute";
@@ -66,10 +55,9 @@ function renderPDF() {
             pageFieldLayer.style.left = "0";
             pageFieldLayer.style.width = viewport.width + "px";
             pageFieldLayer.style.height = viewport.height + "px";
-            pageFieldLayer.style.pointerEvents = "none"; // Allow clicking through when not dragging
+            pageFieldLayer.style.pointerEvents = "auto";
             pageFieldLayer.setAttribute("data-page", pageNum);
-            
-            // Page indicator
+
             const pageIndicator = document.createElement("div");
             pageIndicator.textContent = `${pageNum} / ${pdfDocument.numPages}`;
             pageIndicator.style.position = "absolute";
@@ -82,160 +70,58 @@ function renderPDF() {
             pageIndicator.style.borderRadius = "20px";
             pageIndicator.style.fontSize = "14px";
             pageIndicator.style.zIndex = "10";
-            
-            // Render PDF
+
             const ctx = canvas.getContext("2d");
             page.render({ canvasContext: ctx, viewport: viewport });
-            
-            // Assemble the page
+
             pdfContainer.appendChild(canvas);
             pdfContainer.appendChild(pageFieldLayer);
             pageWrapper.appendChild(pdfContainer);
             pageWrapper.appendChild(pageIndicator);
             currentContainer.appendChild(pageWrapper);
-            
-            // Set field layer reference for first page (or current active page)
+
             if (pageNum === 1 && !fieldLayer) {
                 fieldLayer = pageFieldLayer;
             }
         });
     }
-    
-    // Recreate toolbar after rendering
-    createToolbar();
+
+    setupDragAndDrop();
 }
 
-function createToolbar() {
-    // Remove existing toolbar
-    const existingToolbar = document.getElementById("pdf-toolbar");
-    if (existingToolbar) {
-        existingToolbar.remove();
-    }
-    
-    // Create toolbar
-    const toolbar = document.createElement("div");
-    toolbar.id = "pdf-toolbar";
-    toolbar.style.position = "fixed";
-    toolbar.style.top = "20px";
-    toolbar.style.right = "20px";
-    toolbar.style.backgroundColor = "white";
-    toolbar.style.padding = "15px";
-    toolbar.style.borderRadius = "8px";
-    toolbar.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
-    toolbar.style.zIndex = "1000";
-    toolbar.style.display = "flex";
-    toolbar.style.flexDirection = "column";
-    toolbar.style.gap = "10px";
-    toolbar.style.minWidth = "200px";
-    
-    // Field type selector
-    const fieldTypeLabel = document.createElement("label");
-    fieldTypeLabel.textContent = "Field Type:";
-    fieldTypeLabel.style.fontWeight = "bold";
-    fieldTypeLabel.style.fontSize = "12px";
-    
-    const fieldTypeSelect = document.createElement("select");
-    fieldTypeSelect.id = "field-type";
-    fieldTypeSelect.style.padding = "5px";
-    fieldTypeSelect.style.border = "1px solid #ccc";
-    fieldTypeSelect.style.borderRadius = "4px";
-    
-    const fieldTypes = ["signature", "text", "date", "checkbox"];
-    fieldTypes.forEach(type => {
-        const option = document.createElement("option");
-        option.value = type;
-        option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
-        fieldTypeSelect.appendChild(option);
+function setupDragAndDrop() {
+    const fields = document.querySelectorAll('.draggable-field');
+    fields.forEach(field => {
+        field.addEventListener('dragstart', function(e) {
+            e.dataTransfer.setData('text/plain', this.getAttribute('data-type'));
+        });
     });
-    
-    // Role selector
-    const roleLabel = document.createElement("label");
-    roleLabel.textContent = "Role:";
-    roleLabel.style.fontWeight = "bold";
-    roleLabel.style.fontSize = "12px";
-    
-    const roleSelect = document.createElement("select");
-    roleSelect.id = "role-selector";
-    roleSelect.style.padding = "5px";
-    roleSelect.style.border = "1px solid #ccc";
-    roleSelect.style.borderRadius = "4px";
-    
-    const roles = ["signer1", "signer2", "witness"];
-    roles.forEach(role => {
-        const option = document.createElement("option");
-        option.value = role;
-        option.textContent = role.charAt(0).toUpperCase() + role.slice(1);
-        roleSelect.appendChild(option);
+
+    currentContainer.addEventListener('dragover', function(e) {
+        e.preventDefault();
     });
-    
-    // Add field button
-    const addFieldBtn = document.createElement("button");
-    addFieldBtn.id = "add-field";
-    addFieldBtn.textContent = "Add Field";
-    addFieldBtn.style.padding = "8px 16px";
-    addFieldBtn.style.backgroundColor = "#007bff";
-    addFieldBtn.style.color = "white";
-    addFieldBtn.style.border = "none";
-    addFieldBtn.style.borderRadius = "4px";
-    addFieldBtn.style.cursor = "pointer";
-    addFieldBtn.style.fontSize = "14px";
-    
-    addFieldBtn.onmouseover = () => addFieldBtn.style.backgroundColor = "#0056b3";
-    addFieldBtn.onmouseout = () => addFieldBtn.style.backgroundColor = "#007bff";
-    
-    // Page selector
-    const pageLabel = document.createElement("label");
-    pageLabel.textContent = "Current Page:";
-    pageLabel.style.fontWeight = "bold";
-    pageLabel.style.fontSize = "12px";
-    
-    const pageSelect = document.createElement("select");
-    pageSelect.id = "page-selector";
-    pageSelect.style.padding = "5px";
-    pageSelect.style.border = "1px solid #ccc";
-    pageSelect.style.borderRadius = "4px";
-    
-    // Populate page options
-    if (pdfDocument) {
-        for (let i = 1; i <= pdfDocument.numPages; i++) {
-            const option = document.createElement("option");
-            option.value = i;
-            option.textContent = `Page ${i}`;
-            pageSelect.appendChild(option);
+
+    currentContainer.addEventListener('drop', function(e) {
+        e.preventDefault();
+        const type = e.dataTransfer.getData('text/plain');
+        const pageNum = parseInt(document.querySelector('.page-wrapper')?.getAttribute('data-page')) || 1;
+        const targetFieldLayer = document.querySelector(`.field-layer[data-page="${pageNum}"]`);
+        if (targetFieldLayer) {
+            const rect = targetFieldLayer.getBoundingClientRect();
+            const x = e.clientX - rect.left - 75;
+            const y = e.clientY - rect.top - 20;
+            addFieldFromDrag(type, pageNum, x, y, targetFieldLayer);
         }
-    }
-    
-    // Assemble toolbar
-    toolbar.appendChild(fieldTypeLabel);
-    toolbar.appendChild(fieldTypeSelect);
-    toolbar.appendChild(roleLabel);
-    toolbar.appendChild(roleSelect);
-    toolbar.appendChild(pageLabel);
-    toolbar.appendChild(pageSelect);
-    toolbar.appendChild(addFieldBtn);
-    
-    document.body.appendChild(toolbar);
-    
-    // Add event listeners
-    addFieldBtn.addEventListener("click", addField);
-    pageSelect.addEventListener("change", changeActivePage);
+    });
 }
 
-function addField() {
-    const type = document.getElementById("field-type").value;
-    const roleId = document.getElementById("role-selector").value;
-    const pageNum = parseInt(document.getElementById("page-selector").value);
-    
-    // Get the field layer for the selected page
-    const targetFieldLayer = document.querySelector(`.field-layer[data-page="${pageNum}"]`);
-    if (!targetFieldLayer) return;
-    
+function addFieldFromDrag(type, pageNum, x, y, targetFieldLayer) {
     const field = document.createElement("div");
     field.className = "field-box";
     field.textContent = type.toUpperCase();
     field.style.position = "absolute";
-    field.style.top = "50px";
-    field.style.left = "50px";
+    field.style.top = y + "px";
+    field.style.left = x + "px";
     field.style.backgroundColor = "#ffc";
     field.style.border = "2px dashed #333";
     field.style.padding = "6px 12px";
@@ -246,13 +132,15 @@ function addField() {
     field.style.pointerEvents = "auto";
     field.style.userSelect = "none";
     field.style.zIndex = "100";
-    field.setAttribute("data-role-id", roleId);
+    field.style.width = "150px";
+    field.style.height = "40px";
     field.setAttribute("data-type", type);
+    field.setAttribute("data-role-id", "customer"); // Vai trò mặc định
     field.setAttribute("data-page", pageNum);
-    
-    // Add delete button
+
     const deleteBtn = document.createElement("span");
     deleteBtn.textContent = "×";
+    deleteBtn.className = "delete-field-btn";
     deleteBtn.style.position = "absolute";
     deleteBtn.style.top = "-8px";
     deleteBtn.style.right = "-8px";
@@ -268,60 +156,250 @@ function addField() {
     deleteBtn.style.cursor = "pointer";
     deleteBtn.onclick = (e) => {
         e.stopPropagation();
-        field.remove();
+        if (confirm("Are you sure you want to delete this field?")) {
+            field.remove();
+            saveFieldToBackend(field, true);
+        }
     };
-    
+
+    const resizeHandle = document.createElement("div");
+    resizeHandle.className = "resize-handle";
+
     field.appendChild(deleteBtn);
-    
+    field.appendChild(resizeHandle);
+
     makeDraggable(field);
+    makeResizable(field, resizeHandle);
     targetFieldLayer.appendChild(field);
-    
-    // Scroll to the page if not visible
-    const pageWrapper = document.querySelector(`.page-wrapper[data-page="${pageNum}"]`);
-    if (pageWrapper) {
-        pageWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    setActiveField(field);
+    showEditPopup(field); // Hiển thị popup ngay sau khi thả
+}
+
+function setActiveField(field) {
+    if (activeField) {
+        activeField.classList.remove("active");
+    }
+    activeField = field;
+    if (field) {
+        field.classList.add("active");
     }
 }
 
 function makeDraggable(el) {
-    el.onmousedown = function (e) {
-        if (e.target !== el && e.target.textContent !== "×") return; // Don't drag when clicking delete button
-        
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+
+    el.onmousedown = function(e) {
+        if (e.target.classList.contains('resize-handle') || e.target.classList.contains('delete-field-btn')) {
+            return;
+        }
+
         e.preventDefault();
-        let offsetX = e.offsetX || e.layerX;
-        let offsetY = e.offsetY || e.layerY;
+        e.stopPropagation();
+
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = parseInt(el.style.left) || 0;
+        startTop = parseInt(el.style.top) || 0;
+
+        setActiveField(el);
 
         function moveAt(e) {
-            const rect = el.parentElement.getBoundingClientRect();
-            const x = e.clientX - rect.left - offsetX;
-            const y = e.clientY - rect.top - offsetY;
+            if (!isDragging) return;
             
-            // Constrain within parent bounds
-            const maxX = el.parentElement.offsetWidth - el.offsetWidth;
-            const maxY = el.parentElement.offsetHeight - el.offsetHeight;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
             
-            el.style.left = Math.max(0, Math.min(maxX, x)) + 'px';
-            el.style.top = Math.max(0, Math.min(maxY, y)) + 'px';
+            const newLeft = startLeft + dx;
+            const newTop = startTop + dy;
+
+            const parentRect = el.parentElement.getBoundingClientRect();
+            const maxX = parentRect.width - el.offsetWidth;
+            const maxY = parentRect.height - el.offsetHeight;
+
+            el.style.left = Math.max(0, Math.min(maxX, newLeft)) + 'px';
+            el.style.top = Math.max(0, Math.min(maxY, newTop)) + 'px';
         }
 
         document.addEventListener('mousemove', moveAt);
 
-        document.onmouseup = function () {
+        document.onmouseup = function() {
+            isDragging = false;
             document.removeEventListener('mousemove', moveAt);
             document.onmouseup = null;
+            
+            saveFieldToBackend(el);
+        };
+    };
+
+    el.onclick = function(e) {
+        if (e.target.classList.contains('resize-handle') || e.target.classList.contains('delete-field-btn')) {
+            return;
+        }
+        e.stopPropagation();
+        setActiveField(el);
+        showEditPopup(el); // Hiển thị popup khi click
+    };
+}
+
+function makeResizable(field, handle) {
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight;
+
+    handle.onmousedown = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = parseInt(field.style.width, 10);
+        startHeight = parseInt(field.style.height, 10);
+
+        setActiveField(field);
+
+        function doResize(e) {
+            if (!isResizing) return;
+            
+            const width = startWidth + (e.clientX - startX);
+            const height = startHeight + (e.clientY - startY);
+            
+            const minWidth = 50;
+            const minHeight = 30;
+            
+            field.style.width = Math.max(minWidth, width) + 'px';
+            field.style.height = Math.max(minHeight, height) + 'px';
+        }
+
+        document.addEventListener('mousemove', doResize);
+
+        document.onmouseup = function() {
+            isResizing = false;
+            document.removeEventListener('mousemove', doResize);
+            document.onmouseup = null;
+            
+            saveFieldToBackend(field);
         };
     };
 }
 
-function changeActivePage() {
-    const pageNum = parseInt(document.getElementById("page-selector").value);
-    const pageWrapper = document.querySelector(`.page-wrapper[data-page="${pageNum}"]`);
-    if (pageWrapper) {
-        pageWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+function showEditPopup(field) {
+    let popup = document.getElementById("field-edit-popup");
+    if (!popup) {
+        popup = document.createElement("div");
+        popup.id = "field-edit-popup";
+        popup.innerHTML = `
+            <div>
+                <h3>Edit Field <span class="close-popup">×</span></h3>
+                <hr>
+                <label>Field Type</label>
+                <input type="text" id="field-type-edit" readonly>
+                <label>Field Name</label>
+                <input type="text" id="field-name">
+                <label>Filled By</label>
+                <select id="field-filled-by">
+                    <option value="customer">Customer</option>
+                    <option value="signer1">Signer 1</option>
+                    <option value="signer2">Signer 2</option>
+                    <option value="witness">Witness</option>
+                </select>
+                <label><input type="checkbox" id="field-required"> Required</label>
+                <label>Placeholder</label>
+                <input type="text" id="field-placeholder">
+                <div class="form-footer">
+                    <button class="save-btn">Save</button>
+                    <button class="delete-btn">Delete</button>
+                    <button class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(popup);
+
+        popup.querySelector('.close-popup').onclick = () => popup.remove();
+        popup.querySelector('.cancel-btn').onclick = () => popup.remove();
+        popup.querySelector('.delete-btn').onclick = function() {
+            if (confirm("Are you sure you want to delete this field?")) {
+                field.remove();
+                saveFieldToBackend(field, true);
+                popup.remove();
+            }
+        };
+        popup.querySelector('.save-btn').onclick = function() {
+            field.setAttribute("data-name", document.getElementById("field-name").value);
+            field.setAttribute("data-role-id", document.getElementById("field-filled-by").value);
+            field.setAttribute("data-required", document.getElementById("field-required").checked);
+            field.setAttribute("data-placeholder", document.getElementById("field-placeholder").value);
+            
+            if (field.getAttribute("data-name")) {
+                field.textContent = field.getAttribute("data-name");
+            }
+            
+            saveFieldToBackend(field);
+            popup.remove();
+        };
     }
+
+    document.getElementById("field-type-edit").value = field.getAttribute("data-type");
+    document.getElementById("field-name").value = field.getAttribute("data-name") || "";
+    document.getElementById("field-filled-by").value = field.getAttribute("data-role-id") || "customer";
+    document.getElementById("field-required").checked = field.getAttribute("data-required") === "true";
+    document.getElementById("field-placeholder").value = field.getAttribute("data-placeholder") || "";
 }
 
-// Debounce function
+function saveFieldToBackend(field, isDelete = false) {
+    if (!field) return;
+    
+    const fieldData = {
+        id: field.getAttribute("data-id") || generateUUID(),
+        type: field.getAttribute("data-type"),
+        name: field.getAttribute("data-name"),
+        role_id: field.getAttribute("data-role-id"),
+        required: field.getAttribute("data-required"),
+        placeholder: field.getAttribute("data-placeholder"),
+        page: field.getAttribute("data-page"),
+        x: parseFloat(field.style.left) || 0,
+        y: parseFloat(field.style.top) || 0,
+        width: parseFloat(field.style.width) || 120,
+        height: parseFloat(field.style.height) || 40,
+        is_deleted: isDelete
+    };
+    
+    fetch('/sign_custom/save_field', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify(fieldData)
+    }).then(response => {
+        if (!response.ok) {
+            console.error("Error saving field");
+        }
+        return response.json();
+    }).then(data => {
+        if (data.success && !field.getAttribute("data-id")) {
+            field.setAttribute("data-id", data.field_id);
+        }
+    }).catch(error => {
+        console.error("Error:", error);
+    });
+}
+
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+function getCSRFToken() {
+    const csrfToken = document.querySelector('input[name="csrf_token"]');
+    return csrfToken ? csrfToken.value : '';
+}
+
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -334,57 +412,30 @@ function debounce(func, wait) {
     };
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function() {
     const container = document.getElementById("pdf-container");
     if (!container) {
-        alert("Không tìm thấy container PDF");
+        console.error("PDF container not found");
         return;
     }
-    
-    // Set container style
-    container.style.margin = "0";
-    container.style.padding = "0";
-    container.style.width = "100%";
-    
+
     currentContainer = container;
     const templateId = window.location.pathname.split("/").pop();
     const url = `/sign_custom/template/pdf/${templateId}`;
-    
-    // Load PDF
-    pdfjsLib.getDocument(url).promise.then(function (pdfDoc) {
+
+    pdfjsLib.getDocument(url).promise.then(function(pdfDoc) {
         pdfDocument = pdfDoc;
         renderPDF();
-        
-        // Add resize listener
-        const debouncedResize = debounce(renderPDF, 300);
-        window.addEventListener('resize', debouncedResize);
-        
-        // Keyboard navigation
+
+        window.addEventListener('resize', debounce(renderPDF, 300));
+
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowDown' || e.key === 'PageDown') {
-                e.preventDefault();
-                window.scrollBy({
-                    top: window.innerHeight,
-                    behavior: 'smooth'
-                });
-            } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
-                e.preventDefault();
-                window.scrollBy({
-                    top: -window.innerHeight,
-                    behavior: 'smooth'
-                });
+            if (e.key === 'Escape' && activeField) {
+                setActiveField(null);
             }
         });
-        
-    }).catch(function (error) {
-        console.error("Lỗi khi load PDF:", error);
-        alert("Không thể hiển thị file PDF.");
+    }).catch(function(error) {
+        console.error("Error loading PDF:", error);
+        alert("Could not load PDF document.");
     });
-});
-
-// Set body style
-document.addEventListener("DOMContentLoaded", function() {
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
-    document.body.style.overflow = "auto";
 });
