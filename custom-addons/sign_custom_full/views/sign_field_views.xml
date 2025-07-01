@@ -1,40 +1,30 @@
-<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <!-- Tree View (Danh sách) -->
-  <record id="view_sign_field_list" model="ir.ui.view">
-    <field name="name">sign.field.list</field>
-    <field name="model">sign.field</field>
-    <field name="arch" type="xml">
-      <list>
-        <field name="name" string="Field Name"/>
-        <field name="type" string="Field Type" widget="selection"/>
-      </list>
-    </field>
-  </record>
-
-  <!-- Form View (Chi tiết) -->
-  <record id="view_sign_field_form" model="ir.ui.view">
-    <field name="name">sign.field.form</field>
-    <field name="model">sign.field</field>
-    <field name="arch" type="xml">
-      <form string="Signature Field">
-        <sheet>
-          <group>
-            <field name="name" string="Field Name"/>
-            <field name="type" string="Field Type"/>
-          </group>
-        </sheet>
-      </form>
-    </field>
-  </record>
-
-  <!-- Action (Hiển thị menu) -->
-  <record id="action_sign_field" model="ir.actions.act_window">
-    <field name="name">Signature Fields</field>
-    <field name="res_model">sign.field</field>
-    <field name="view_mode">list,form</field>
-  </record>
-
-  <!-- Menu Item -->
- 
+  <data>
+    <!-- Tree View - Chỉ hiển thị Name và Type -->
+    <record id="view_sign_field_list" model="ir.ui.view">
+      <field name="name">sign.field.list</field>
+      <field name="model">sign.field</field>
+      <field name="arch" type="xml">
+        <list string="Signature Fields" create="true" edit="true" delete="true">
+          <field name="name"/>
+          <field name="type"/>
+        </list>
+      </field>
+    </record>
+    <record id="view_sign_field_form_simple" model="ir.ui.view">
+      <field name="name">sign.field.form.simple</field>
+      <field name="model">sign.field</field>
+      <field name="priority">1</field>
+      <field name="arch" type="xml">
+        <form string="Create Field">
+          <sheet>
+            <group>
+              <field name="name" string="Field Name" required="1" placeholder="Enter field name..."/>
+              <field name="type" string="Field Type" required="1"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+  </data>
 </odoo>

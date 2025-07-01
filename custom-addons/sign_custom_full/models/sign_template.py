@@ -19,18 +19,20 @@ class SignTemplate(models.Model):
     def get_available_roles(self):
         """ Trả về danh sách role đang tồn tại trong hệ thống """
         return self.env['sign.role'].search([])
-    @api.model
-    def create(self, vals):
-        """Override create để tự động set filename"""
-        # Tự động set filename từ context nếu có
-        if vals.get('document') and not vals.get('document_filename'):
-            # Odoo thường pass filename qua context khi upload file
-            filename = self._context.get('default_document_filename') or \
-                      self._context.get('filename') or \
-                      'document.pdf'
-            vals['document_filename'] = filename
+    
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create để tự động set filename, hỗ trợ batch creation"""
+        for vals in vals_list:
+            # Tự động set filename từ context nếu có
+            if vals.get('document') and not vals.get('document_filename'):
+                # Odoo thường pass filename qua context khi upload file
+                filename = self._context.get('default_document_filename') or \
+                          self._context.get('filename') or \
+                          'document.pdf'
+                vals['document_filename'] = filename
             
-        return super().create(vals)
+        return super().create(vals_list)
     
     def write(self, vals):
         """Override write để update filename khi thay đổi document"""
