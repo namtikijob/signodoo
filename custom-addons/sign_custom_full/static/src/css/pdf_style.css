@@ -60,11 +60,35 @@ canvas {
     transition: all 0.2s ease;
     /* ✅ Đảm bảo field không bị ảnh hưởng bởi parent styles */
     transform-origin: center center;
+    white-space: nowrap;
+    resize: both;
+    overflow: hidden;
+}
+
+.pdf-field::after {
+    content: '';
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    width: 12px;
+    height: 12px;
+    background: #007bff;
+    cursor: se-resize;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.pdf-field:hover::after {
+    opacity: 1;
 }
 
 .pdf-field:hover {
     background-color: rgba(255, 193, 7, 0.9) !important;
     transform: translate(-50%, -50%) scale(1.05) !important;
+}
+
+.pdf-field.dragging {
+    opacity: 0.5;
 }
 
 .pdf-field span {

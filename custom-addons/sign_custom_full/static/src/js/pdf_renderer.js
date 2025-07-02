@@ -212,6 +212,12 @@ function loadExistingFields() {
 function createFieldElement(pageWrapper, fieldData) {
     console.log('Creating field element:', fieldData);
     
+    // Xóa field cũ nếu tồn tại (tránh duplicate)
+    const existingField = pageWrapper.querySelector(`.pdf-field[data-field-id="${fieldData.id}"]`);
+    if (existingField) {
+        existingField.remove();
+    }
+    
     const fieldElement = document.createElement('div');
     fieldElement.className = 'pdf-field';
     fieldElement.dataset.fieldId = fieldData.id;
@@ -237,6 +243,17 @@ function createFieldElement(pageWrapper, fieldData) {
         fieldElement.style.left = fieldX + 'px';
         fieldElement.style.top = fieldY + 'px';
         fieldElement.style.transform = 'translate(-50%, -50%)';
+        fieldElement.style.zIndex = '1000';
+        fieldElement.style.cursor = 'move';
+        fieldElement.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+        fieldElement.style.border = '2px solid #007bff';
+        fieldElement.style.borderRadius = '4px';
+        fieldElement.style.padding = '4px 8px';
+        fieldElement.style.fontSize = '12px';
+        fieldElement.style.userSelect = 'none';
+        fieldElement.style.minWidth = '80px';
+        fieldElement.style.minHeight = '20px';
+        fieldElement.style.whiteSpace = 'nowrap';
     }
     
     // Display field name/type
@@ -255,6 +272,15 @@ function createFieldElement(pageWrapper, fieldData) {
         if (shouldDelete) {
             deleteField(fieldElement, fieldData);
         }
+    });
+    
+    // Add hover effects
+    fieldElement.addEventListener('mouseenter', function() {
+        fieldElement.style.backgroundColor = 'rgba(0, 123, 255, 0.2)';
+    });
+    
+    fieldElement.addEventListener('mouseleave', function() {
+        fieldElement.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
     });
     
     // Add to page wrapper with validation
@@ -282,7 +308,8 @@ function deleteField(fieldElement, fieldData) {
     })
     .then(res => res.json())
     .then(response => {
-        if (response.result?.success || response.success) {
+        const isSuccess = response.result?.success || response.success;
+        if (isSuccess) {
             fieldElement.remove();
             
             // Remove from cache
@@ -380,7 +407,13 @@ function setupDropEvents(wrapper) {
                 })
                 .then(response => {
                     console.log('Field update response:', response);
-                    if (response.success) {
+                    
+                    // FIX: Kiểm tra response structure đúng cách
+                    const isSuccess = response.result?.success || response.success;
+                    
+                    if (isSuccess) {
+                        console.log('Field position updated successfully');
+                        
                         // Update cache
                         const fieldIndex = existingFieldsData.findIndex(f => f.id == dropData.field_id);
                         if (fieldIndex !== -1) {
@@ -388,22 +421,56 @@ function setupDropEvents(wrapper) {
                             existingFieldsData[fieldIndex].posY = clampedPosY;
                             existingFieldsData[fieldIndex].page = page;
                         }
-                        // Re-render field
+                        
+                        // FIX: Tìm và cập nhật vị trí field element thay vì xóa và tạo lại
                         const fieldElement = document.querySelector(`.pdf-field[data-field-id="${dropData.field_id}"]`);
                         if (fieldElement) {
-                            fieldElement.remove();
+                            // Cập nhật dataset
+                            fieldElement.dataset.originalPosX = clampedPosX;
+                            fieldElement.dataset.originalPosY = clampedPosY;
+                            
+                            // Tính toán vị trí mới
+                            const canvasRect = canvas.getBoundingClientRect();
+                            const wrapperRect = wrapper.getBoundingClientRect();
+                            
+                            const canvasLeft = canvasRect.left - wrapperRect.left;
+                            const canvasTop = canvasRect.top - wrapperRect.top;
+                            
+                            const fieldX = canvasLeft + (clampedPosX * canvas.offsetWidth);
+                            const fieldY = canvasTop + (clampedPosY * canvas.offsetHeight);
+                            
+                            // Cập nhật vị trí field element
+                            fieldElement.style.left = fieldX + 'px';
+                            fieldElement.style.top = fieldY + 'px';
+                            
+                            console.log('Field element position updated visually');
+                            
+                            // Di chuyển field element đến page đích nếu khác page hiện tại
+                            const currentPage = fieldElement.closest('[data-page]');
+                            if (currentPage && parseInt(currentPage.dataset.page) !== page) {
+                                const targetPage = document.querySelector(`[data-page="${page}"]`);
+                                if (targetPage) {
+                                    fieldElement.remove();
+                                    targetPage.appendChild(fieldElement);
+                                    console.log('Field moved to page:', page);
+                                }
+                            }
+                        } else {
+                            // Fallback: Tạo lại field element nếu không tìm thấy
+                            createFieldElement(wrapper, {
+                                id: dropData.field_id,
+                                name: dropData.name,
+                                type: dropData.type,
+                                posX: clampedPosX,
+                                posY: clampedPosY,
+                                page: page
+                            });
                         }
-                        createFieldElement(wrapper, {
-                            id: dropData.field_id,
-                            name: dropData.name,
-                            type: dropData.type,
-                            posX: clampedPosX,
-                            posY: clampedPosY,
-                            page: page
-                        });
-                        console.log('Field position updated and re-rendered');
+                        
                     } else {
-                        alert('Failed to update field position: ' + (response.error || 'Unknown error'));
+                        const errorMessage = response.result?.error || response.error || 'Unknown error';
+                        console.error('Failed to update field position:', errorMessage);
+                        alert('Failed to update field position: ' + errorMessage);
                     }
                 })
                 .catch(err => {
@@ -433,7 +500,8 @@ function setupDropEvents(wrapper) {
                 })
                 .then(response => {
                     console.log('Field add response:', response);
-                    if (response.result?.success || response.success) {
+                    const isSuccess = response.result?.success || response.success;
+                    if (isSuccess) {
                         const newFieldData = {
                             id: response.result?.field_id || response.field_id || Date.now(),
                             name: dropData.name,
@@ -446,7 +514,8 @@ function setupDropEvents(wrapper) {
                         createFieldElement(wrapper, newFieldData);
                         console.log('Field successfully added and rendered');
                     } else {
-                        alert('Failed to add field: ' + (response.error || 'Unknown error'));
+                        const errorMessage = response.result?.error || response.error || 'Unknown error';
+                        alert('Failed to add field: ' + errorMessage);
                     }
                 })
                 .catch(err => {
