@@ -34,10 +34,5 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem
-        id="menu_sign_roles"
-        name="Roles"
-        parent="menu_sign_root"
-        action="action_sign_role"
-        sequence="30"/>
+
 </odoo>

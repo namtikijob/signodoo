@@ -17,8 +17,6 @@ class SignField(models.Model):
     template_id = fields.Many2one('sign.template', string="Template", ondelete='cascade')
     role_id = fields.Many2one('sign.role', string="Role")
     page = fields.Integer(string="Page", default=1)
-    width = fields.Float(string="Width", default=0.1)
-    height = fields.Float(string="Height", default=0.05)
     posX = fields.Float(string="Position X")
     posY = fields.Float(string="Position Y")
 
